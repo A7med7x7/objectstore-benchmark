@@ -11,11 +11,11 @@ services:
     ports: 
       - "8888:8888"
     volumes:
-      - ~/MLflow_amd:/home/jovyan/work/MLflow_amd
+      - ~/UC-NODE:/home/jovyan/work/UC-NODE
       - /mnt/data:/home/jovyan/data        
     environment:
       - JUPYTER_ENABLE_LAB=yes
-      - PYTHONPATH=/home/jovyan/work/MLflow_amd
+      - PYTHONPATH=/home/jovyan/work/UC-NODE
       - MLFLOW_TRACKING_URI=http://mlflow:8000
       - AMD_VISIBLE_DEVICES=all
       
@@ -51,7 +51,7 @@ services:
       - mlflow
       - server
       - --backend-store-uri=/mlflow/mlruns
-      - --artifacts-destination=s3://MLflow_amd-mlflow-artifacts
+      - --artifacts-destination=s3://UC-NODE-mlflow-artifacts
       - --serve-artifacts
       - --host=0.0.0.0
       - --port=8000

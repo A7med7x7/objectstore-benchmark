@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Environment Generation Script for MLflow_amd
+# Environment Generation Script for UC-NODE
 # This script extracts S3 credentials from rclone config and generates .env file
 
 REMOTE_NAME="rclone_s3" 
@@ -20,7 +20,7 @@ S3_ENDPOINT_URL=$(grep -A5 "\[$REMOTE_NAME\]" "$RCLONE_CONF" | grep "endpoint" |
 
 
 # Project configuration
-PROJECT_NAME=MLflow_amd
+PROJECT_NAME=UC-NODE
 
 # Get public IP
 HOST_IP=$(curl -s ifconfig.me)
