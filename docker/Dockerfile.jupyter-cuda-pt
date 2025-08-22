@@ -1,6 +1,15 @@
 FROM quay.io/jupyter/pytorch-notebook:cuda11-latest
 
-USER root
+USER root 
+RUN apt-get update && \
+    apt-get install -y fuse3 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install rclone
+RUN curl -fsSL https://rclone.org/install.sh | bash
+
+COPY entrypoint.sh /usr/local/bin/start-jupyter-and-mounts.sh
+RUN chmod +x /usr/local/bin/start-jupyter-and-mounts.sh
 
 # Install GitHub CLI tool
 RUN apt-get update && \
