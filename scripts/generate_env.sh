@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Environment Generation Script for UC-NODE
+# Environment Generation Script for UC-OBJECT
 # This script extracts S3 credentials from rclone config and generates .env file
 
 REMOTE_NAME="rclone_s3" 
@@ -20,7 +20,7 @@ S3_ENDPOINT_URL=$(grep -A5 "\[$REMOTE_NAME\]" "$RCLONE_CONF" | grep "endpoint" |
 
 
 # Project configuration
-PROJECT_NAME=UC-NODE
+PROJECT_NAME=UC-OBJECT
 
 # Get public IP
 HOST_IP=$(curl -s ifconfig.me)

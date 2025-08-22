@@ -1,4 +1,4 @@
-# UC-NODE
+# UC-OBJECT
 
 Welcome! This project is designed to help you **run ML experiments on Chameleon Cloud** with minimal setup, follow the guide below in order to know how to use the generated project. 
 
@@ -36,7 +36,7 @@ Inside the `chi` directory, run the notebook [`0_create_buckets.ipynb`](chi/0_cr
 When you need to work on your project, you will launch a compute instance on Chameleon Cloud.
 
 First, you will [reserve an instance](https://chameleoncloud.readthedocs.io/en/latest/technical/reservations/gui_reservations.html). Use your project name as a prefix for your lease name.
-(e.g UC-NODE)_gpu_p100
+(e.g UC-OBJECT)_gpu_p100
 Then, to provision your server and configure it for your project, you will run:
 
 
@@ -50,6 +50,8 @@ Then, to provision your server and configure it for your project, you will run:
 
 
 
+- [`chi/1_create_server_nvidia.ipynb`](chi/1_create_server_nvidia.ipynb)
+
 
 ---
 
@@ -59,7 +61,7 @@ On your computer instance (SSH-ing from your local machine via shell), generate 
 From your **home directory** (`~`), run:
 
 ```sh
-bash ./UC-NODE/scripts/generate_env.sh
+bash ./UC-OBJECT/scripts/generate_env.sh
 ```
 
 you will be prompted to enter your HuggingFace Token,after inputting.
@@ -72,14 +74,14 @@ you should see something like:
 From your **home directory** (`~`), run:
 
 ```sh
-docker compose --env-file ~/.env -f UC-NODE/docker/docker-compose.yml up -d --build
+docker compose --env-file ~/.env -f UC-OBJECT/docker/docker-compose.yml up -d --build
 ```
 
 
 
 for amd 
 ```sh
-docker compose --env-file ~/.env -f UC-NODE/docker/docker-compose-amd.yml up -d --build
+docker compose --env-file ~/.env -f UC-OBJECT/docker/docker-compose-amd.yml up -d --build
 ```
 
 ---
@@ -118,14 +120,14 @@ Open this URL in your browser to see your experiments and logs.
 If you’d like to pause your environment, you can stop the running containers with the command:
 
 ```sh
-docker compose --env-file ~/.env -f UC-NODE/docker/docker-compose.yml down
+docker compose --env-file ~/.env -f UC-OBJECT/docker/docker-compose.yml down
 ```
 
 
 
 for amd 
 ```sh
-docker compose --env-file ~/.env -f UC-NODE/docker/docker-compose-amd.yml down
+docker compose --env-file ~/.env -f UC-OBJECT/docker/docker-compose-amd.yml down
 ```
 
 

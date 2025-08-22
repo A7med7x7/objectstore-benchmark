@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile:
         
-        Dockerfile.jupyter-rocm-pt
+        Dockerfile.jupyter-cuda-pt
         
     container_name: jupyter
     ports: 
@@ -17,17 +17,14 @@ services:
       - JUPYTER_ENABLE_LAB=yes
       - PYTHONPATH=/home/jovyan/work/UC-OBJECT
       - MLFLOW_TRACKING_URI=http://mlflow:8000
-      - AMD_VISIBLE_DEVICES=all
       
       - HF_HOME=${HF_HOME}
       - HF_TOKEN_PATH=${HF_TOKEN_PATH}
       - HF_TOKEN=${HF_TOKEN}
       
-    devices:
-      - /dev/kfd:/dev/kfd
-      - /dev/dri:/dev/dri   
-    group_add:
-      - ${GID_RENDER} 
+    
+    runtime: nvidia
+    
     restart: always 
     shm_size: 2g
 
