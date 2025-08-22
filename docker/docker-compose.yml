@@ -11,13 +11,13 @@ services:
     ports: 
       - "8888:8888"
     volumes:
+      - ~/.config/rclone:/home/jovyan/.config/rclone
       - ~/UC-OBJECT:/home/jovyan/work/UC-OBJECT
-      - /mnt/data:/home/jovyan/data        
     environment:
       - JUPYTER_ENABLE_LAB=yes
       - PYTHONPATH=/home/jovyan/work/UC-OBJECT
       - MLFLOW_TRACKING_URI=http://mlflow:8000
-      
+    
       - HF_HOME=${HF_HOME}
       - HF_TOKEN_PATH=${HF_TOKEN_PATH}
       - HF_TOKEN=${HF_TOKEN}
@@ -27,6 +27,13 @@ services:
     
     restart: always 
     shm_size: 2g
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - /dev/fuse:/dev/fuse
+    security_opt:
+      - apparmor:unconfined
+    entrypoint: ["/usr/local/bin/start-jupyter-and-mounts.sh"]
 
   mlflow:
     build:
