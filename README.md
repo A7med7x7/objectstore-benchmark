@@ -1,153 +1,146 @@
-# UC-OBJECT
+# My Setup & Benchmarks 
+ 
+### buckets 
+I've created 2 different buckets on **CHI@UC** with the compute on **CHI@TACC** (GPU_NVIDIA bare metal)
+- `s3_mount ` : later mounted via Ceph 
+- `swift_mount`: via Swift 
 
-Welcome! This project is designed to help you **run ML experiments on Chameleon Cloud** with minimal setup, follow the guide below in order to know how to use the generated project. 
-
-## Purpose of this README
-
-This README is for **users who have already generated the project**.  
-It explains how to **provision resources, creating confuguring servers using notebooks, and setup your environment** on Chameleon Cloud.  
-
-> If you are looking for instructions on **how to generate this project** from the template, see the **[main README](https://github.com/A7med7x7/ReproGen/blob/dev/README.md) at the root of the template repository**.
-
-### Prerequisites
-
-- You must have a [Chameleon Cloud](https://chameleoncloud.org) account, and an allocation as part of a project. 
-- You should have already configured SSH keys at the Chameleon site that you plan to use, e.g. following [Hello, Chameleon](https://teaching-on-testbeds.github.io/hello-chameleon/).
-
-
-## Provisioning resources on Chameleon Cloud
-
-The `chi` directory in your newly created project automates setting up data buckets, bringing up compute instances, and launching a fully configured Jupyter environment with MLFlow experiment tracking for your machine learning experiments.
-
-In [Chameleon JupyterHub](https://jupyter.chameleoncloud.org/hub/), clone your new project and open the `chi` directory.
-
-```sh 
-git clone https://github.com/A7med7x7/objectstore-benchmark.git
-```
-
-### First run only: Create object store buckets
-
-At the beginning of your project, you will create buckets in Chameleon's object store, to hold datasets, metrics, and artifacts from experiment runs. Unlike data saved to the ephemeral local disk of the compute instance, this data will persist beyond the lifetime of the compute instance.
-
-Inside the `chi` directory, run the notebook [`0_create_buckets.ipynb`](chi/0_create_buckets.ipynb) to create these buckets.
-
-### Launching a compute instance
-
-When you need to work on your project, you will launch a compute instance on Chameleon Cloud.
-
-First, you will [reserve an instance](https://chameleoncloud.readthedocs.io/en/latest/technical/reservations/gui_reservations.html). Use your project name as a prefix for your lease name.
-(e.g UC-OBJECT)_gpu_p100
-Then, to provision your server and configure it for your project, you will run:
-
-
-
-
-
-
-- [`chi/1_create_server_amd.ipynb`](chi/1_create_server_amd.ipynb)
-
-
-
-
-
-- [`chi/1_create_server_nvidia.ipynb`](chi/1_create_server_nvidia.ipynb)
-
-
----
-
-### Configure and start your Jupyter environment
-
-On your computer instance (SSH-ing from your local machine via shell), generate the `.env` file required for Docker Compose:
-From your **home directory** (`~`), run:
-
+-  installed rclone on the image 
+		```dockerfile
+		RUN curl -fsSL https://rclone.org/install.sh | bash 
+		```
+- mount the rclone config file from the *host* to the *container* (docker-compose.yml)
+		 ```yml
+		 ~/.config/rclone:/home/jovyan/.config/rclone
+		  ```
 ```sh
-bash ./UC-OBJECT/scripts/generate_env.sh
-```
+#!/usr/bin/env bash
 
-you will be prompted to enter your HuggingFace Token,after inputting.
-you should see something like:
+mkdir -p /home/jovyan/data/s3_mount
+mkdir -p /home/jovyan/data/swift_mount
+chown -R "${NB_UID:-1000}:${NB_GID:-100}" /home/jovyan/data || true
 
-`✅ The .env file has been generated successfully at : /home/cc/.env`
+# fast flags
+FAST_FLAGS=(
+  --vfs-cache-mode full
+  --vfs-fast-fingerprint
+  --vfs-read-chunk-streams 10
+  --no-modtime
+  --transfers 10
+)
 
----
+# mounring
+rclone mount rclone_s3:s3_mount /home/jovyan/data/s3_mount \
+  "${FAST_FLAGS[@]}" \
+  --daemon
 
-From your **home directory** (`~`), run:
-
-```sh
-docker compose --env-file ~/.env -f UC-OBJECT/docker/docker-compose.yml up -d --build
+rclone mount rclone_swift:swift_mount /home/jovyan/data/swift_mount \
+  "${FAST_FLAGS[@]}" \
+  --daemon
 ```
 
 
+### Benchmarks 
 
-for amd 
-```sh
-docker compose --env-file ~/.env -f UC-OBJECT/docker/docker-compose-amd.yml up -d --build
+- copying `Food-11.zip` (without performance flags)
+```vb 
+(base) jovyan@6a05b63cf540:~$ time cp data/Food-11.zip data/`s3_mount`/
+
+real    0m11.230s
+user    0m0.017s
+sys     0m1.119s
+(base) jovyan@6a05b63cf540:~$ time cp data/Food-11.zip data/`swift_mount`/
+
+real    0m17.014s
+user    0m0.017s
+sys     0m1.114s
 ```
+- copying `Food-11.zip` (with performance flags)
 
----
+```vb 
+(base) jovyan@6a05b63cf540:~$ time cp data/Food-11.zip data/`s3_mount`/
 
-### Login to Jupyter Lab and MLFlow UI
+real 0m3.908s 
+user 0m0.019s 
+sys 0m1.072s 
+(base) jovyan@6a05b63cf540:~$ time cp data/Food-11.zip data/`swift_mount`/
 
-after your build finished, with the output 
-
-```sh
-[+] Running 5/5
- ✔ docker-jupyter          Built                                                                                                             
- ✔ docker-mlflow           Built                                                                                                             
- ✔ Network docker_default  Created                                                                                                           
- ✔ Container mlflow        Started                                                                                                     
- ✔ Container jupyter       Started        
- ```
-
-you can access your Jupyter Lab and MLflow UI 
-1. Access your jupyter: you can grab the token from running image using the command:
-
-```sh
-docker exec jupyter jupyter server list | tail -n 1 | cut -f1 -d" " | sed "s/localhost/$(curl -s ifconfig.me)/"
-```
-
-Open the printed URL in your browser.
-2. Access MLflow UI 
-
-```sh
-echo "http://$(curl -s ifconfig.me):$(docker port mlflow 8000 | cut -d':' -f2)"
-
-```
-Open this URL in your browser to see your experiments and logs.
-
-### 5.5. Stop the Containerized Environment
-
-If you’d like to pause your environment, you can stop the running containers with the command:
-
-```sh
-docker compose --env-file ~/.env -f UC-OBJECT/docker/docker-compose.yml down
+real 0m4.281s 
+user 0m0.016s 
+sys 0m1.131s 
 ```
 
 
+- downloading from HuggingFace (set the HF_HOME to point the mounting point) (10-GB of data)(with performance flags)
+		
+```vb 
+$s3
 
-for amd 
-```sh
-docker compose --env-file ~/.env -f UC-OBJECT/docker/docker-compose-amd.yml down
+Loaded Yejy53/Echo-4o-Image in 260.61 seconds
+Summary:
+Original repo: 260.61 seconds
+
+$swift 
+
+Generating train split:
+Loaded Yejy53/Echo-4o-Image in 260.61 seconds 
+ Summary:
+Original repo: 324.55 seconds
+
+
 ```
 
+- copying `10-GB` of data(without performance flags)
+```vb 
+(base) jovyan@6a05b63cf540:~$ time cp -r  data/datasts/datasets/Yejy53___echo-4o-image/  data/`s3_mount`/hf_cache/dataset0
 
-This will stop and remove the containers, but all your data in mounted volumes will remain safe.
-When you want to restart later, simply run the docker compose up command again (see Step 4).
+real    1m38.813s
+user    0m0.181s
+sys     0m9.750s
 
-### pushing code to GitHub 
-once you have completed your first experiment run, you can push your code to GitHub. We've pre-installed the GitHub CLI in your container to make this easy.
-First, sync your account by running this command
-```sh
-gh auth login --hostname github.com --git-protocol https --web <<< $'Y\n'
+(base) jovyan@6a05b63cf540:~$ time cp -r  data/datasts/datasets/Yejy53___echo-4o-image/  data/`swift_mount`/hf_cache/dataset0
+
+real    2m27.460s
+user    0m0.168s
+sys     0m8.709s
 ```
-follow the instruction and you are ready to git push
+- copying `10-GB` of data(with performance flags)
+```vb 
+(base) jovyan@88aebd9a7821:~$ time cp -r  data/Yejy53___echo-4o-image/ data/`s3_mount`/hf_cache/datasets/dataset01 
 
----
+real    0m34.139s
+user    0m0.194s
+sys     0m9.791s
 
-### 6. Clean Up Resources
+(base) jovyan@88aebd9a7821:~$ time cp -r  data/Yejy53___echo-4o-image/ data/`swift_mount`/dataset01
 
-When finished, delete your server to free up resources.
+real    0m46.162s
+user    0m0.177s
+sys     0m9.807s
+```
 
-**In Chameleon JupyterHub, open and run:**
+- unzip `Food-11.zip` (without performance flags)
+```vb
+(base) jovyan@6a05b63cf540:~$ time unzip -q data/`s3_mount`/Food-11.zip
 
-- [`chi/3_delete_resources.ipynb`](chi/3_delete_resources.ipynb)
+real    0m38.362s
+user    0m15.712s
+sys     0m3.799s
+
+(base) jovyan@6a05b63cf540:~$ time unzip -q data/`swift_mount`/Food-11.zip
+
+real    0m49.095s
+user    0m16.625s
+sys     0m5.224s
+```
+- unzip `Food-11.zip` (with performance flags)
+```vb 
+(base) jovyan@88aebd9a7821:~$ time unzip -q data/`s3_mount`/Food-11.zip 
+
+real    0m14.664s
+
+(base) jovyan@88aebd9a7821:~$ time unzip -q data/`swift_mount`/Food-11.zip 
+
+real    0m17.228s
+
+```
