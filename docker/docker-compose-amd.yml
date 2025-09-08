@@ -4,9 +4,7 @@ services:
     build:
       context: .
       dockerfile:
-        
         Dockerfile.jupyter-rocm-pt
-        
     container_name: jupyter
     ports: 
       - "8888:8888"
@@ -18,11 +16,9 @@ services:
       - PYTHONPATH=/home/jovyan/work/UC-OBJECT
       - MLFLOW_TRACKING_URI=http://mlflow:8000
       - AMD_VISIBLE_DEVICES=all
-      
       - HF_HOME=${HF_HOME}
       - HF_TOKEN_PATH=${HF_TOKEN_PATH}
       - HF_TOKEN=${HF_TOKEN}
-      
     devices:
       - /dev/kfd:/dev/kfd
       - /dev/dri:/dev/dri   
@@ -30,11 +26,10 @@ services:
       - ${GID_RENDER} 
     restart: always 
     shm_size: 2g
-
   mlflow:
     build:
-       context: . 
-       dockerfile: Dockerfile.mlflow
+      context: . 
+      dockerfile: Dockerfile.mlflow
     container_name: mlflow
     restart: always
     ports:
@@ -51,7 +46,7 @@ services:
       - mlflow
       - server
       - --backend-store-uri=/mlflow/mlruns
-      - --artifacts-destination=s3://UC-OBJECT-mlflow-artifacts
+      - --artifacts-destination=s3://${PROJECT_NAME}-mlflow-artifacts
       - --serve-artifacts
       - --host=0.0.0.0
       - --port=8000
