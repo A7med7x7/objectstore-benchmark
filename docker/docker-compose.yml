@@ -11,7 +11,7 @@ services:
     ports: 
       - "8888:8888"
     volumes:
-      - ~/.config/rclone:/home/jovyan/.config/rclone
+      - /mnt/data:/home/jovyan/data        
       - ~/UC-OBJECT:/home/jovyan/work/UC-OBJECT
     environment:
       - JUPYTER_ENABLE_LAB=yes
@@ -31,9 +31,6 @@ services:
       - SYS_ADMIN
     devices:
       - /dev/fuse:/dev/fuse
-    security_opt:
-      - apparmor:unconfined
-    entrypoint: ["/usr/local/bin/start-jupyter-and-mounts.sh"]
 
   mlflow:
     build:
